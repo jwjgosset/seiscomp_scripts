@@ -15,13 +15,13 @@ def create_key_file(
     station_name: str
 ):
     stationfile = Path(
-        f'/home/sysop/seiscomp/etc/key/station_{station_name}\n')
+        f'/home/sysop/seiscomp/etc/key/station_{station_name}')
 
     # Check if the key file already exists
     if not stationfile.exists():
 
         # Write the key file
-        lines = [f'{slarchive_process}:local']
+        lines = [f'{slarchive_process}:local\n']
         with open(stationfile, mode='w') as f:
             f.writelines(lines)
 

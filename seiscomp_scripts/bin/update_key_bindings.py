@@ -14,7 +14,8 @@ def create_key_file(
     slarchive_process: str,
     station_name: str
 ):
-    stationfile = Path(f'/home/sysop/seiscomp/etc/key/station_{station_name}')
+    stationfile = Path(
+        f'/home/sysop/seiscomp/etc/key/station_{station_name}\n')
 
     # Check if the key file already exists
     if not stationfile.exists():

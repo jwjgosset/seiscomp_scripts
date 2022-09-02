@@ -59,18 +59,28 @@ def get_station_list(
 def reconfigure_slarchive_process(
     slarchive_process: str
 ):
+    # Update config
     cmd = ['seiscomp', 'update-config', slarchive_process]
 
     process = Popen(cmd, stdout=PIPE, stderr=PIPE)
 
-    process.communicate()
+    stdout, stderr = process.communicate()
 
+    # Restart process
+    cmd[1] = 'restart'
+
+    process = Popen(cmd, stdout=PIPE, stderr=PIPE)
+
+    stdout, stderr = process.communicate()
+
+    # Check status
     cmd[1] = 'status'
 
     process = Popen(cmd, stdout=PIPE, stderr=PIPE)
 
     stdout, stderr = process.communicate()
 
+    # Raise an exception if the slarchive process isn't running
     if 'is running' not in stdout.decode():
         raise SeiscompStatusError(f'{slarchive_process} is not running.')
 

@@ -36,7 +36,7 @@ def main(
         masked_stations=masked_stations)
 
     # Update the list of masked stations
-    masked_stations.write()
+    masked_stations.write_to_file()
 
     return
 

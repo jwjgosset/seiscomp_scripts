@@ -17,7 +17,7 @@ class MaskedStations(List):
         with open(maskfile_path, mode='r') as f:
             self.append(f.readlines())
 
-    def write(self):
+    def write_to_file(self):
         with open(self.maskfile_path, mode='w') as f:
             f.writelines(self)
 

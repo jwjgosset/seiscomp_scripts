@@ -1,89 +1,7 @@
-import logging
-from subprocess import Popen, PIPE
 from pathlib import Path
-from typing import List
 import click
-
-
-class SeiscompStatusError(Exception):
-    def __init__(self, e: str):
-        super().__init__(e)
-
-
-def create_key_file(
-    slarchive_process: str,
-    station_name: str
-):
-    stationfile = Path(
-        f'/home/sysop/seiscomp/etc/key/station_{station_name}')
-
-    # Check if the key file already exists
-    if not stationfile.exists():
-
-        # Write the key file
-        lines = [f'{slarchive_process}:local\n']
-        with open(stationfile, mode='w') as f:
-            f.writelines(lines)
-
-        # Return boolean to tell if a change was made, indicating that the
-        # process needs a reconfigure
-        changed = True
-    else:
-        changed = False
-
-    return changed
-
-
-def get_station_list(
-    ip_address: str
-) -> List[str]:
-    process = Popen(["slinktool", "-L", ip_address], stdout=PIPE, stderr=PIPE)
-    stdout, stderr = process.communicate()
-
-    lines = stdout.decode().split('\n')
-
-    stations: List[str] = []
-
-    for line in lines:
-        splitline = line.split(' ')
-        # invalid lines are skipped
-        if len(splitline) < 2:
-            continue
-
-        # Reformat line into station name
-        station = splitline[0] + '_' + splitline[1]
-        stations.append(station)
-
-    return stations
-
-
-def reconfigure_slarchive_process(
-    slarchive_process: str
-):
-    # Update config
-    cmd = ['seiscomp', 'update-config', slarchive_process]
-
-    process = Popen(cmd, stdout=PIPE, stderr=PIPE)
-
-    stdout, stderr = process.communicate()
-
-    # Restart process
-    cmd[1] = 'restart'
-
-    process = Popen(cmd, stdout=PIPE, stderr=PIPE)
-
-    stdout, stderr = process.communicate()
-
-    # Check status
-    cmd[1] = 'status'
-
-    process = Popen(cmd, stdout=PIPE, stderr=PIPE)
-
-    stdout, stderr = process.communicate()
-
-    # Raise an exception if the slarchive process isn't running
-    if 'is running' not in stdout.decode():
-        raise SeiscompStatusError(f'{slarchive_process} is not running.')
+from seiscomp_scripts.key_bindings import MaskedStations, \
+    get_station_list, update_key_files  # type: ignore
 
 
 @click.command()
@@ -95,32 +13,30 @@ def reconfigure_slarchive_process(
     '--slarchive-process',
     help='Name of slarchive process'
 )
+@click.option(
+    '--mask-file',
+    help='Path to file containing list of stations to mask'
+)
 def main(
     ip_address: str,
-    slarchive_process: str
+    slarchive_process: str,
+    mask_file: str
 ):
-
-    # Flag for reconfiguring slarchive process if changes are made
-    reconfigure = False
-
     # Get a list of stations
     station_list = get_station_list(ip_address=ip_address)
 
-    # Create a key file for each station if one doesn't exist
-    for station in station_list:
-        changed = create_key_file(
-            slarchive_process=slarchive_process,
-            station_name=station)
-        # If a new keyfile was made, flag it
-        if changed:
-            reconfigure = True
+    # Load the list of masked stations
 
-    # Try to reconfigure the slarchive process if anything changed
-    if reconfigure:
-        try:
-            reconfigure_slarchive_process(slarchive_process=slarchive_process)
-        except SeiscompStatusError as e:
-            logging.error(e)
+    masked_stations = MaskedStations(Path(mask_file))
+
+    # Create key files for any missing stations
+    update_key_files(
+        station_list=station_list,
+        slarchive_process=slarchive_process,
+        masked_stations=masked_stations)
+
+    # Update the list of masked stations
+    masked_stations.write()
 
     return
 

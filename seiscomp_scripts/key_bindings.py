@@ -15,11 +15,11 @@ class MaskedStations(List):
     def __init__(self, maskfile_path: Path):
         self.maskfile_path = maskfile_path
         with open(maskfile_path, mode='r') as f:
-            self.append(f.readlines())
+            self.extend(f.readlines())
 
     def write_to_file(self):
         with open(self.maskfile_path, mode='w') as f:
-            f.write("\n".join(self))
+            f.write(("\n".join(self)))
 
 
 def update_key_files(

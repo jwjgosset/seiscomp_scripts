@@ -36,7 +36,7 @@ def update_key_files(
                 station_name=station)
 
             if not success:
-                masked_stations.append(station)
+                masked_stations.extend(station)
 
 
 def create_key_file(

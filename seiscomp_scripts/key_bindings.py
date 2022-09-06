@@ -36,14 +36,13 @@ def update_key_files(
                 station_name=station)
 
             if not success:
-                masked_stations.extend(station)
+                masked_stations.append(station)
 
 
 def create_key_file(
     slarchive_process: str,
     station_name: str
-
-):
+) -> bool:
     '''
     Create a key file for a specific station
 
@@ -83,7 +82,7 @@ def create_key_file(
 
             # Return False if the key binding could not be added
             return False
-        return True
+    return True
 
 
 def get_station_list(

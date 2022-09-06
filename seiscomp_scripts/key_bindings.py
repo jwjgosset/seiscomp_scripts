@@ -19,7 +19,7 @@ class MaskedStations(List):
 
     def write_to_file(self):
         with open(self.maskfile_path, mode='w') as f:
-            f.writelines(self)
+            f.write("\n".join(self))
 
 
 def update_key_files(

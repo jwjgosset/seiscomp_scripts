@@ -18,7 +18,7 @@ class MaskedStations(List):
             lines = f.read().split('\n')
             for line in lines:
                 if line != '':
-                    self.extend(line)
+                    self.append(line)
 
     def write_to_file(self):
         contents = "\n".join(self)

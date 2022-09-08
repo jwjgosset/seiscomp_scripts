@@ -18,8 +18,10 @@ class MaskedStations(List):
             self.extend(f.readlines())
 
     def write_to_file(self):
+        contents = "\n".join(self)
+        logging.debug(f'Writing to {str(self.maskfile_path)}:\n{contents}')
         with open(self.maskfile_path, mode='w') as f:
-            f.write(("\n".join(self)))
+            f.write(contents)
 
 
 def update_key_files(
@@ -27,7 +29,21 @@ def update_key_files(
     slarchive_process: str,
     masked_stations: List[str]
 ):
+    '''
+    Create new key binding files for any station that doesn't have one, and
+    isn't in the list on masked stations
 
+    Parameters
+    ----------
+    station_list: List[str]
+        List of station codes in the NN_SSSSS format
+
+    slarchive_process: str
+        The name of the slarchive process to assign to the station key bindings
+
+    masked_stations: List[str]
+        List of stations to ignore to avoid crashing of slarchive process
+    '''
     # Create a key file for each station if one doesn't exist
     for station in station_list:
         if station not in masked_stations:
@@ -35,6 +51,8 @@ def update_key_files(
                 slarchive_process=slarchive_process,
                 station_name=station)
 
+            # If the slarchive process crashed after adding a station, add it
+            # to the list of masked stations
             if not success:
                 masked_stations.append(station)
 
@@ -64,6 +82,7 @@ def create_key_file(
     # Check if the key file already exists
     if not stationfile.exists():
 
+        logging.debug(f'Writing key binding file {str(stationfile)}')
         # Write the key file
         lines = [f'{slarchive_process}:local\n']
         with open(stationfile, mode='w') as f:
@@ -74,7 +93,7 @@ def create_key_file(
             reconfigure_slarchive_process(slarchive_process=slarchive_process)
         except SeiscompStatusError as e:
             logging.warning((f'Adding key binding for stream {station_name} ' +
-                             f'caused {slarchive_process} to crash.'))
+                             f'caused {slarchive_process} to crash'))
             logging.warning(e)
             # Roll back changes
             stationfile.unlink()
@@ -82,6 +101,8 @@ def create_key_file(
 
             # Return False if the key binding could not be added
             return False
+    else:
+        logging.debug(f'Key binding {str(stationfile)} already exists')
     return True
 
 
@@ -100,20 +121,26 @@ def get_station_list(
     -------
     List: list of station names in NN_SSSSS format
     '''
+    # Use slinktool to get a list of streams the acquisition server can serve
     process = Popen(["slinktool", "-L", ip_address], stdout=PIPE, stderr=PIPE)
     stdout, stderr = process.communicate()
+
+    # If slinktool caused an error, log it
+    if stderr.decode != '':
+        logging.error(stderr.decode())
 
     lines = stdout.decode().split('\n')
 
     stations: List[str] = []
 
+    # Parse the output of slinktool for station codes
     for line in lines:
         splitline = line.split(' ')
         # invalid lines are skipped
         if len(splitline) < 2:
             continue
 
-        # Reformat line into station name
+        # Reformat line into NN_SSSSS format
         station = splitline[0] + '_' + splitline[1]
         stations.append(station)
 
@@ -143,6 +170,11 @@ def reconfigure_slarchive_process(
 
     stdout, stderr = process.communicate()
 
+    logging.debug(stdout.decode())
+
+    if stderr.decode() != '':
+        logging.error(stderr.decode())
+
     # Restart process
     cmd[1] = 'restart'
 
@@ -150,12 +182,22 @@ def reconfigure_slarchive_process(
 
     stdout, stderr = process.communicate()
 
+    logging.debug(stdout.decode())
+
+    if stderr.decode() != '':
+        logging.error(stderr.decode())
+
     # Check status
     cmd[1] = 'status'
 
     process = Popen(cmd, stdout=PIPE, stderr=PIPE)
 
     stdout, stderr = process.communicate()
+
+    logging.debug(stdout.decode())
+
+    if stderr.decode() != '':
+        logging.error(stderr.decode())
 
     # Raise an exception if the slarchive process isn't running
     if 'is running' not in stdout.decode():

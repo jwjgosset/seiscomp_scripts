@@ -126,8 +126,8 @@ def get_station_list(
     stdout, stderr = process.communicate()
 
     # If slinktool caused an error, log it
-    if stderr.decode != '':
-        logging.error(stderr.decode())
+    if stderr.decode() != '':
+        logging.error("Slinktool error: " + stderr.decode())
 
     lines = stdout.decode().split('\n')
 
@@ -173,7 +173,7 @@ def reconfigure_slarchive_process(
     logging.debug(stdout.decode())
 
     if stderr.decode() != '':
-        logging.error(stderr.decode())
+        logging.error("Seiscomp update-config error: " + stderr.decode())
 
     # Restart process
     cmd[1] = 'restart'
@@ -185,7 +185,7 @@ def reconfigure_slarchive_process(
     logging.debug(stdout.decode())
 
     if stderr.decode() != '':
-        logging.error(stderr.decode())
+        logging.error("Seiscomp restart error: " + stderr.decode())
 
     # Check status
     cmd[1] = 'status'
@@ -197,7 +197,7 @@ def reconfigure_slarchive_process(
     logging.debug(stdout.decode())
 
     if stderr.decode() != '':
-        logging.error(stderr.decode())
+        logging.error("Seiscomp status error: " + stderr.decode())
 
     # Raise an exception if the slarchive process isn't running
     if 'is running' not in stdout.decode():

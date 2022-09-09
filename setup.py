@@ -4,7 +4,7 @@ from setuptools import find_packages
 
 setup(
     name='seiscomp_scripts',
-    version='0.1.0',
+    version='0.2.0',
     description='',
     author='Jonathan Gosset',
     author_email='jonathan.gosset@nrcan-rncan.gc.ca',
@@ -14,8 +14,11 @@ setup(
         'obspy'
     ],
     entry_points={
-        'console_scripts': [
-            'update_key_bindings=seiscomp_scripts.bin.update_key_bindings:main'
+        'console_scripts': 
+        [
+            ('update_key_bindings=' +
+             'seiscomp_scripts.bin.update_key_bindings:main'),
+            'backfill_sds=seiscomp_scripts.bin.backfill_sds:main'
         ]
     }
 )

@@ -1,6 +1,6 @@
 from pathlib import Path
 import click
-from seiscomp_scripts.key_bindings import MaskedStations, \
+from seiscomp_scripts.bindings.key_bindings import MaskedStations, \
     get_station_list, update_key_files  # type: ignore
 from seiscomp_scripts.config import LogLevels
 import logging

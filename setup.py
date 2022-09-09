@@ -11,6 +11,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         'click',
+        'obspy'
     ],
     entry_points={
         'console_scripts': [
